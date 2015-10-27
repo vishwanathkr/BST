@@ -1,0 +1,149 @@
+#!/usr/local/bin/perl
+
+#####################################################################
+# CHECK - a utility for checking successful operation of BUNDLE
+#
+# After bundling/turnin, the resulting TAR files will be placed in the 
+# turnin.dest directory as <username>.<project>.
+# This script checks for the existence of that file.
+
+#############
+# Configuration section -- change required files, project name,
+# and courselabel here.
+#
+$projectname = "P1";
+$courselabel = "cs100w";
+
+# End of Configuration section
+#############
+
+
+############
+# Sanity check - there should be no arguments.
+# Students may try to run "bundleP1 ~/projs/P1" in the expectation
+# that they can bundle up another directory that way.  not so,
+# at least for the time being.
+&usage() if ($#ARGV > -1);
+
+############
+# Setup
+$| = 1; # unbuffer stdout
+
+###############
+# Probe to see whether a turnin file already exists
+# catch errors from "turnin" here.  Also gather up
+# per-project information such as maximum file size.
+$cmd = "turnin -c $courselabel -p $projectname -q";
+open(IN, "$cmd|");
+@lines = <IN>;
+close(IN);
+
+$result = ($? >> 8) + 0; # catch exit code
+
+# We should have better handling here.  Perhaps a general function
+# to deal with turnin result codes would be appropriate.
+if ($result > 0) {
+	&contactprof("$0: turnin returned exit code \"$result\" on query\n");
+}
+
+
+###############
+# Gather information from "turnin -q"
+$previousexists = grep(/previously turned-in/, @lines);
+($line) = grep(/previous\ file\ name:\s+.+$/, @lines); 
+	($pathcomps) = ($line =~ /name:\s+(.+)$/);
+        @pathcomps = split(/\//,$pathcomps);
+        ($previousfilename) = $pathcomps[$#pathcomps];
+($line) = grep(/previous\ file\ dated:\s+.+$/, @lines); 
+	($previousdate) = ($line =~ /dated:\s+(.+)$/);
+($line) = grep(/previous\ file\ size:\s+.+$/, @lines); 
+	($previoussize) = ($line =~ /size:\s+(\d+)/);
+
+($line) = grep(/Turnin\ period\ ends:\s+.+$/, @lines);
+	($deadline) = ($line =~ /ends:\s+(.+)/);
+($line) = grep(/Maximum\ project\ file\ size:\s+.+$/, @lines); 
+	($maxfilesize) = ($line =~ /size:\s+(\d+)/);
+
+
+###############
+# Inform them if a previously-turned-in turnin bundle exists
+if ($previousexists) {
+    print "YES, your bundle for $projectname has been turned in: \n";
+    print "  dated $previousdate, name $previousfilename, size $previoussize bytes.\n\n";
+} else {
+    print "NO, your bundle for $projectname has NOT been turned in.\n";
+    print "\tEnforced deadline for $projectname: $deadline\n";
+}
+
+exit;
+
+##########
+# Utility functions
+
+sub
+usage {
+	print <<EOM;
+           Run "$0" with no arguments.
+EOM
+	
+	exit(1);
+}
+
+sub
+contactacs {
+	local($message) = @_;
+
+	print <<EOM;
+
+An error has occurred within TURNIN.  Please contact
+Academic Computing Services, x44060, acs-consult\@ucsd.edu
+and give us the text of the following message:
+
+$message
+
+Thank you.
+
+EOM
+
+	exit(0);
+}
+
+
+sub
+contactprof {
+	local($message) = @_;
+
+	print <<EOM;
+
+An error has occurred during the TURNIN process.  Please notify
+your instructor or TA and include the text of the following message:
+
+$message
+
+Thank you.
+
+EOM
+
+	exit(0);
+}
+
+# print a prompt and handle a "y or n" response.
+# return true if first char of response is y, 
+# false if first char of response is n, 
+# else reprompts 
+sub y_or_n {
+    local($prompt) = @_;
+    while (1) {
+        print STDOUT $prompt;
+        local($answer) = scalar(<STDIN>);
+        chop($answer);
+        if ($answer =~ /^[yn]$/) {
+            return ($answer =~ /y/);
+        } else {
+            print STDOUT "Please answer y or n.\n";
+        }
+    }
+}                               
+ 
+ 
+

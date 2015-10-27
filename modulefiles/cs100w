@@ -1,0 +1,122 @@
+#%Module
+# $Header: /public/Templates/course/public/modulefiles/RCS/course,v 1.2 2010/09/06 15:17:22 root Exp $
+
+#################################################################
+#								#
+# customize the line(s) below to meet course s/w requirements.	#
+# This is where changes to the environment should be made,	#
+# for example...						#
+#								#
+# Load s/w modules reqired for course.				#
+# Leave these above other customizations			#
+#								#
+#  module	load		purify
+#  module	load		R
+#								#
+#################################################################
+
+global env
+
+module-whatis "Customizes your environment for [module-info name]."
+
+proc ModulesHelp { } {
+        puts stderr "
+	Loading the [module-info name] module customizes your environment
+	for this course.
+        "
+}
+
+# Standard includes
+  source	$env(ACMS_MODULES)/lib/utils.tcl
+
+# Prepend this module's name to ':' delimited envvar PREPPROMPT
+  source	$env(ACMS_MODULES)/lib/prepprompt.tcl
+
+# Adjusts PATH and MANPATH to include (optional) bin, man, and share/man
+# directories found in the course umbrella, and sets envvar PREPLABEL.
+# Defines UMBRELLA and PUBLIC environment vars.
+  source	$env(ACMS_MODULES)/lib/umbrella_paths.tcl
+
+# If storagedir exists, chdir there when module is loaded.
+# On module unload, "chdir ."
+  source	$env(ACMS_MODULES)/lib/cd_storagedir.tcl
+
+# On module load, preserve current umask, then set new one.
+# On unload, restore preserved umask.  "umask" must be set before
+# umask.tcl is sourced.
+#  set		umask 007
+#  source 	$env(ACMS_MODULES)/lib/umask.tcl
+
+# Interpret "broadcast.sh" file, and "cat" broadcast message, .
+# Also runs "$PUBLIC/custom.sh" if it exists.
+  source 	$env(ACMS_MODULES)/lib/broadcast.tcl
+
+###############################################################################
+ 
+# Additional course specific customization;  Following lines are
+# commented-out, but here to serve as an example of addiitiona
+# customization to course "modulefile".
+
+# module	load		dot
+# Display schedule updates...
+# set		sched		$PUBLIC/schedule_update
+# set		pager		/public/Modules/bin/pager
+# if { [file exists $sched] } {
+# 	system "$pager $sched"
+# }
+#
+# set		home		$env(HOME)
+# set-alias	ls		"ls -C --color"
+# set-alias	f		finger
+# set-alias	h		history
+# set-alias 	turnin		"$PUBLIC/turnin"
+# set-alias	verify		"$PUBLIC/verify"
+#
+# setenv	LD_RUN_PATH	/usr/local/gnu/lib
+# setenv	EXINIT		"set ai ic showmode sm report=0 wm=6"
+# setenv	PURIFYOPTIONS	"-cache-dir=$home/PURIFY -always-use-cache-dir -locking=no"
+# 
+# prepend-path	PATH		/usr/usr/local/stuff/bin
+# prepend-path	MANPATH		/usr/usr/local/stuff/man
+# append-path   PATH            /usr/X11R6/bin
+# append-path   MANPATH		/usr/X11R6/share/man
+# catch { [unset home sched pager] }
+
+##  ln165f customizations follow:
+#   module load R
+##  We need python 2.6 instead of default (python-2.7).  Replace 2.7
+##  by 2.6.6 if python-2.7 is loaded, using "module switch" to preserve
+##  PATH hierarchy.  If neither version is loaded, load 2.6.6.
+#   if { [is-loaded "python"] } {
+#        module  switch          python  python-2.6.6
+#   } else {
+#	if { ! [is-loaded "python-2.6.6"] } {
+#		module load	python-2.6.6
+#	}
+#   }
+#
+#   setenv 	R_LIBS		$PUBLIC/R/library
+#   append-path	PYTHONPATH	$PUBLIC/lib/python2.6/site-packages
+#   append-path	NLTK_DATA	$PUBLIC/nltk_data
+#   append-path	CLASSPATH	$PUBLIC/prefixparser-2004-11-30
+#   append-path	CLASSPATH	$PUBLIC/retroweaver-2.0.7/lib
+#
+#
+## Notes:
+## Installing "R" modules:
+## 	R CMD INSTALL -l $R_LIBS <module>   #e.g. where <module>="ggplot2"
+##
+## Installing python modules:
+##	cd moduledir
+##	python setup.py install --prefix=$PUBLIC
+##
+## Building GNU-like packages from source
+##	cd pkgdir
+##	./configure --prefix=$PUBLIC
+##	make; make install
+##
+## Java
+##   Jar files should be placed in directories referenced in $CLASSPATH
+
+# get g++ version 4.7.1 to use C++-11 features
+module	load	gcc-4.7.0
